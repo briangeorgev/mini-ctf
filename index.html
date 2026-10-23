@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mini CTF</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Mini CTF</h1>
+      <p>Beginner-friendly Capture the Flag</p>
+    </header>
+
+    <main class="container">
+      <section id="player-section" class="panel">
+        <input id="playerName" type="text" placeholder="Enter your name" />
+        <button id="startButton" type="button">Start</button>
+        <p id="currentPlayer"></p>
+        <p id="currentScore"></p>
+      </section>
+
+      <section id="challenges" aria-live="polite"></section>
+
+      <section id="leaderboard" class="panel">
+        <h2>Leaderboard</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Score</th>
+              <th>Completed</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardBody"></tbody>
+        </table>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
