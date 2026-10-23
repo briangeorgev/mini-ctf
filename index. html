@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini CTF</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #0d0d0d;
+      color: #00ff66;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      border-bottom: 1px solid #00ff66;
+    }
+    h1 {
+      margin: 0;
+      font-size: 2em;
+    }
+    #player-section {
+      text-align: center;
+      margin: 20px;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #00ff66;
+      background: #1a1a1a;
+      color: #00ff66;
+    }
+    button:hover {
+      background: #00ff66;
+      color: #0d0d0d;
+      cursor: pointer;
+    }
+    .challenge {
+      border: 1px solid #00ff66;
+      margin: 15px;
+      padding: 15px;
+      border-radius: 5px;
+    }
+    .challenge h2 {
+      margin-top: 0;
+    }
+    #leaderboard {
+      margin: 20px;
+      border-top: 1px solid #00ff66;
+      padding-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #00ff66;
+      padding: 8px;
+      text-align: center;
+    }
+    .success {
+      color: #00ff66;
+      font-weight: bold;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5em; }
+      .challenge { font-size: 0.9em; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mini CTF</h1>
+    <p>Beginner-friendly Capture the Flag</p>
+  </header>
+
+  <div id="player-section">
+    <input type="text" id="playerName" placeholder="Enter your name">
+    <button onclick="startGame()">Start</button>
+    <p id="currentPlayer"></p>
+    <p id="currentScore"></p>
+  </div>
+
+  <div id="challenges"></div>
+
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <table>
+      <thead>
+        <tr><th>Player</th><th>Score</th><th>Completed</th></tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+
+<script>
+const challenges = [
+  {
+    id: 1,
+    title: "View Page Source",
+    description: "Find the hidden flag in the page source.",
+    hint: "Right-click → View Page Source.",
+    flag: "CTF{source_flag}"
+  },
+  {
+    id: 2,
+    title: "Inspect Element",
+    description: "Inspect elements to find a hidden attribute.",
+    hint: "Look for a data-flag attribute.",
+    flag: "CTF{inspect_flag}"
+  },
+  {
+    id: 3,
+    title: "Hidden Element",
+    description: "Find a hidden element containing the flag.",
+    hint: "Search for hidden text in the DOM.",
+    flag: "CTF{hidden_flag}"
+  },
+  {
+    id: 4,
+    title: "Browser Console",
+    description: "Open the developer console to find the flag.",
+    hint: "Press F12 or Ctrl+Shift+I.",
+    flag: "CTF{console_flag}"
+  },
+  {
+    id: 5,
+    title: "Find the Final Flag",
+    description: "Search the HTML source for the final flag.",
+    hint: "It’s hidden somewhere in the code.",
+    flag: "CTF{final_flag}"
+  }
+];
+
+let players = JSON.parse(localStorage.getItem("players")) || {};
+let currentPlayer = null;
+
+function startGame() {
+  const name = document.getElementById("playerName").value.trim();
+  if (!name) return alert("Please enter your name.");
+  if (!players[name]) {
+    players[name] = { score: 0, completed: [] };
+  }
+  currentPlayer = name;
+  localStorage.setItem("players", JSON.stringify(players));
+  document.getElementById("currentPlayer").innerText = "Player: " + currentPlayer;
+  updateScore();
+  renderChallenges();
+  renderLeaderboard();
+}
+
+function renderChallenges() {
+  const container = document.getElementById("challenges");
+  container.innerHTML = "";
+  challenges.forEach(ch => {
+    const div = document.createElement("div");
+    div.className = "challenge";
+    div.innerHTML = `
+      <h2>${ch.title}</h2>
+      <p>${ch.description}</p>
+      <p><em>Hint:</em> ${ch.hint}</p>
+      <input type="text" id="answer-${ch.id}" placeholder="Enter flag">
+      <button onclick="submitAnswer(${ch.id})">Submit</button>
+      <p id="message-${ch.id}"></p>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function submitAnswer(id) {
+  const answer = document.getElementById("answer-" + id).value.trim();
+  const challenge = challenges.find(c => c.id === id);
+  const message = document.getElementById("message-" + id);
+  if (players[currentPlayer].completed.includes(id)) {
+    message.innerHTML = "<span class='error'>Already completed!</span>";
+    return;
+  }
+  if (answer === challenge.flag) {
+    players[currentPlayer].score += 100;
+    players[currentPlayer].completed.push(id);
+    message.innerHTML = "<span class='success'>Correct! Flag captured.</span>";
+  } else {
+    message.innerHTML = "<span class='error'>Incorrect flag.</span>";
+  }
+  localStorage.setItem("players", JSON.stringify(players));
+  updateScore();
+  renderLeaderboard();
+}
+
+function updateScore() {
+  if (currentPlayer) {
+    const player = players[currentPlayer];
+    document.getElementById("currentScore").innerText =
+      "Score: " + player.score + " | Completed: " + player.completed.length;
+  }
+}
+
+function renderLeaderboard() {
+  const body = document.getElementById("leaderboardBody");
+  body.innerHTML = "";
+  const sorted = Object.entries(players).sort((a,b) => b[1].score - a[1].score);
+  sorted.forEach(([name, data]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${name}</td><td>${data.score}</td><td>${data.completed.length}</td>`;
+    body.appendChild(row);
+  });
+}
+
+// Hidden flags in the page
+// Challenge 1 flag hidden in HTML comment:
+<!-- CTF{source_flag} -->
+// Challenge 2 flag hidden in attribute:
+<div id="hiddenAttr" data-flag="CTF{inspect_flag}" style="display:none;"></div>
+// Challenge 3 flag hidden element:
+<div style="display:none;">CTF{hidden_flag}</div>
+// Challenge 4 flag in console:
+console.log("CTF{console_flag}");
+// Challenge 5 flag hidden in source:
+<!-- Final flag: CTF{final_flag} -->
+</script>
+</body>
+</html>
